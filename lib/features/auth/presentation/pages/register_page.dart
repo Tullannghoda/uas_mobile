@@ -16,6 +16,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _departmentCtrl = TextEditingController();
   bool _obscure = true;
   bool _obscureConfirm = true;
 
@@ -25,6 +27,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     _emailCtrl.dispose();
     _passCtrl.dispose();
     _confirmCtrl.dispose();
+    _phoneCtrl.dispose();
+    _departmentCtrl.dispose();
     super.dispose();
   }
 
@@ -35,6 +39,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       name: _nameCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
       password: _passCtrl.text,
+      phone: _phoneCtrl.text.trim(),
+      department: _departmentCtrl.text.trim(),
     );
 
     if (success && mounted) {
@@ -103,6 +109,25 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               ),
               const SizedBox(height: 16),
               TextFormField(
+                controller: _phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Nomor Telepon',
+                  prefixIcon: Icon(Icons.phone_outlined),
+                ),
+                validator: (v) => v == null || v.isEmpty ? 'Nomor telepon wajib diisi' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _departmentCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Departemen / Kelas',
+                  prefixIcon: Icon(Icons.business_outlined),
+                ),
+                validator: (v) => v == null || v.isEmpty ? 'Departemen wajib diisi' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
                 controller: _passCtrl,
                 obscureText: _obscure,
                 decoration: InputDecoration(
@@ -142,7 +167,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.08),
+                    color: Colors.red.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(

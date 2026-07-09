@@ -61,10 +61,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String name,
     required String email,
     required String password,
+    String? phone,
+    String? department,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      await _repo.register(name: name, email: email, password: password);
+      await _repo.register(
+        name: name,
+        email: email,
+        password: password,
+        phone: phone,
+        department: department,
+      );
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {

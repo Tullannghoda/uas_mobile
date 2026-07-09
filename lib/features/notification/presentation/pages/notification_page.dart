@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/notification_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
+
 import '../../../tickets/presentation/pages/ticket_detail_page.dart';
 import '../../../../core/widgets/common_widgets.dart';
 
@@ -28,17 +29,21 @@ class NotificationPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(notificationProvider);
-    final user = ref.watch(authProvider).user;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifikasi'),
         actions: [
           if (state.unreadCount > 0)
-            TextButton(
-              onPressed: () => ref.read(notificationProvider.notifier).markAllRead(),
-              child: const Text('Tandai Semua', style: TextStyle(color: Colors.white)),
-            ),
+            Consumer(builder: (context, ref, _) {
+              final user = ref.read(authProvider).user;
+              return TextButton(
+                onPressed: () {
+                  if (user != null) ref.read(notificationProvider.notifier).markAllRead(user.id);
+                },
+                child: const Text('Tandai Semua', style: TextStyle(color: Colors.white)),
+              );
+            }),
         ],
       ),
       body: state.isLoading
@@ -47,17 +52,17 @@ class NotificationPage extends ConsumerWidget {
           ? const AppEmptyState(message: 'Tidak ada notifikasi', icon: Icons.notifications_none_outlined)
           : ListView.separated(
         itemCount: state.notifications.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
+        separatorBuilder: (context, index) => const Divider(height: 1),
         itemBuilder: (context, i) {
           final n = state.notifications[i];
-          final isRead = n['isRead'] as bool;
+          final isRead = n['is_read'] as bool;
           final type = n['type'] as String;
           return ListTile(
-            tileColor: isRead ? null : _colorFor(type).withOpacity(0.05),
+            tileColor: isRead ? null : _colorFor(type).withValues(alpha: 0.05),
             leading: Stack(
               children: [
                 CircleAvatar(
-                  backgroundColor: _colorFor(type).withOpacity(0.15),
+                  backgroundColor: _colorFor(type).withValues(alpha: 0.15),
                   child: Icon(_iconFor(type), color: _colorFor(type), size: 20),
                 ),
                 if (!isRead)
@@ -80,16 +85,16 @@ class NotificationPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(n['message'], style: const TextStyle(fontSize: 13)),
-                Text(n['createdAt'].toString().substring(0, 16),
+                Text(n['created_at'].toString().substring(0, 16).replaceFirst('T', ' '),
                     style: const TextStyle(fontSize: 11, color: Colors.grey)),
               ],
             ),
             isThreeLine: true,
             onTap: () {
               ref.read(notificationProvider.notifier).markRead(n['id']);
-              if (n['ticketId'] != null) {
+              if (n['ticket_id'] != null) {
                 Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => TicketDetailPage(ticketId: n['ticketId'])));
+                    builder: (_) => TicketDetailPage(ticketId: n['ticket_id'])));
               }
             },
           );

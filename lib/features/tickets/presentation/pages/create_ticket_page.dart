@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/ticket_provider.dart';
-import '../../../../core/theme/app_theme.dart';
 
 class CreateTicketPage extends ConsumerStatefulWidget {
   const CreateTicketPage({super.key});
@@ -41,6 +41,14 @@ class _CreateTicketPageState extends ConsumerState<CreateTicketPage> {
     final user = ref.read(authProvider).user;
     if (user == null) return;
 
+    List<Map<String, dynamic>> filesData = [];
+    for (var f in _images) {
+      filesData.add({
+        'name': f.name,
+        'bytes': await f.readAsBytes(),
+      });
+    }
+
     setState(() => _loading = true);
     final success = await ref.read(ticketListProvider.notifier).createTicket(
       title: _titleCtrl.text.trim(),
@@ -49,7 +57,7 @@ class _CreateTicketPageState extends ConsumerState<CreateTicketPage> {
       priority: _priority,
       userId: user.id,
       userName: user.name,
-      attachments: _images.map((f) => f.path).toList(),
+      attachments: filesData,
     );
     setState(() => _loading = false);
 
@@ -119,7 +127,7 @@ class _CreateTicketPageState extends ConsumerState<CreateTicketPage> {
                         margin: const EdgeInsets.only(right: 8),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: sel ? c.withOpacity(0.15) : Colors.transparent,
+                          color: sel ? c.withValues(alpha: 0.15) : Colors.transparent,
                           border: Border.all(color: sel ? c : Colors.grey.shade300, width: sel ? 2 : 1),
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -161,7 +169,9 @@ class _CreateTicketPageState extends ConsumerState<CreateTicketPage> {
                           width: 80, height: 80,
                           clipBehavior: Clip.hardEdge,
                           decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
-                          child: Image.file(File(_images[i].path), fit: BoxFit.cover),
+                          child: kIsWeb 
+                              ? Image.network(_images[i].path, fit: BoxFit.cover) 
+                              : Image.file(File(_images[i].path), fit: BoxFit.cover),
                         ),
                         Positioned(
                           top: 2, right: 10,

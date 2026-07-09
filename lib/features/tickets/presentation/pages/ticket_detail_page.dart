@@ -6,6 +6,7 @@ import '../../data/models/ticket_model.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../admin/providers/user_management_provider.dart';
 
 class TicketDetailPage extends ConsumerStatefulWidget {
   final String ticketId;
@@ -22,8 +23,12 @@ class _TicketDetailPageState extends ConsumerState<TicketDetailPage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() =>
-        ref.read(ticketDetailProvider.notifier).load(widget.ticketId));
+    Future.microtask(() {
+      final user = ref.read(authProvider).user;
+      if (user != null) {
+        ref.read(ticketDetailProvider.notifier).load(widget.ticketId, user.id, user.name, user.role);
+      }
+    });
   }
 
   @override
@@ -75,8 +80,12 @@ class _TicketDetailPageState extends ConsumerState<TicketDetailPage> {
               itemBuilder: (_) => [
                 const PopupMenuItem(value: 'status', child: Row(children: [
                   Icon(Icons.swap_horiz, size: 18), SizedBox(width: 8), Text('Update Status')])),
-                const PopupMenuItem(value: 'assign', child: Row(children: [
-                  Icon(Icons.person_add, size: 18), SizedBox(width: 8), Text('Assign Tiket')])),
+                if (user?.isAdmin == true)
+                  const PopupMenuItem(value: 'assign', child: Row(children: [
+                    Icon(Icons.person_add, size: 18), SizedBox(width: 8), Text('Assign Tiket')])),
+                if (user?.isAdmin == true)
+                  const PopupMenuItem(value: 'delete', child: Row(children: [
+                    Icon(Icons.delete, color: Colors.red, size: 18), SizedBox(width: 8), Text('Hapus Tiket', style: TextStyle(color: Colors.red))])),
               ],
             ),
         ],
@@ -134,16 +143,62 @@ class _TicketDetailPageState extends ConsumerState<TicketDetailPage> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
+                // Attachments
+                if (ticket.attachments.isNotEmpty) ...[
+                  const Text('Lampiran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 100,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: ticket.attachments.length,
+                      itemBuilder: (context, i) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              ticket.attachments[i],
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: 100, height: 100,
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.broken_image, color: Colors.grey),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                // Timeline
+                const Text('Timeline Tiket', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 8),
-                // Timestamps
-                Row(
-                  children: [
-                    const Icon(Icons.access_time, size: 13, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text('Dibuat: ${ticket.createdAt.substring(0, 10)}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                    const SizedBox(width: 16),
-                    Text('Diperbarui: ${ticket.updatedAt.substring(0, 10)}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                  ],
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _TimelineItem(icon: Icons.add_circle, color: Colors.blue, label: 'Dibuat', time: ticket.createdAt, by: ticket.userName),
+                        if (ticket.assignedAt != null)
+                          _TimelineItem(icon: Icons.person_add, color: Colors.orange, label: 'Di-assign', time: ticket.assignedAt!, by: 'Admin Sistem'),
+                        if (ticket.readAt != null)
+                          _TimelineItem(icon: Icons.visibility, color: Colors.purple, label: 'Dibaca', time: ticket.readAt!, by: ticket.assignedTo),
+                        if (ticket.inProgressAt != null)
+                          _TimelineItem(icon: Icons.build, color: AppTheme.primary, label: 'Dikerjakan', time: ticket.inProgressAt!, by: ticket.assignedTo),
+                        if (ticket.resolvedAt != null)
+                          _TimelineItem(icon: Icons.check_circle, color: Colors.green, label: 'Diselesaikan', time: ticket.resolvedAt!, by: ticket.assignedTo),
+                        if (ticket.closedAt != null)
+                          _TimelineItem(icon: Icons.lock, color: Colors.grey, label: 'Ditutup', time: ticket.closedAt!, by: ticket.assignedTo ?? 'Sistem'),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Row(
@@ -152,7 +207,7 @@ class _TicketDetailPageState extends ConsumerState<TicketDetailPage> {
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                      decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
                       child: Text('${ticket.comments.length}', style: const TextStyle(fontSize: 12, color: AppTheme.primary, fontWeight: FontWeight.bold)),
                     ),
                   ],
@@ -173,7 +228,7 @@ class _TicketDetailPageState extends ConsumerState<TicketDetailPage> {
               padding: const EdgeInsets.fromLTRB(12, 8, 8, 12),
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 8, offset: const Offset(0, -2))],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 8, offset: const Offset(0, -2))],
               ),
               child: SafeArea(
                 child: Row(
@@ -224,6 +279,32 @@ class _TicketDetailPageState extends ConsumerState<TicketDetailPage> {
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
         builder: (_) => _AssignBottomSheet(ref: ref),
       );
+    } else if (action == 'delete') {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Hapus Tiket?'),
+          content: const Text('Apakah Anda yakin ingin menghapus tiket ini permanen? Semua data terkait (komentar, history, lampiran) mungkin akan terhapus.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () async {
+                Navigator.pop(context); // close dialog
+                await ref.read(ticketDetailProvider.notifier).deleteTicket();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tiket dihapus'), backgroundColor: Colors.red));
+                  Navigator.pop(context); // close detail page
+                }
+              },
+              child: const Text('Hapus'),
+            ),
+          ],
+        ),
+      );
     }
   }
 }
@@ -240,7 +321,7 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: (color ?? Colors.grey).withOpacity(0.1),
+        color: (color ?? Colors.grey).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -297,7 +378,7 @@ class _CommentBubble extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isMe ? AppTheme.primary : (isStaff ? AppTheme.secondary.withOpacity(0.1) : Colors.grey.shade100),
+              color: isMe ? AppTheme.primary : (isStaff ? AppTheme.secondary.withValues(alpha: 0.1) : Colors.grey.shade100),
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(16),
                 topRight: const Radius.circular(16),
@@ -315,6 +396,43 @@ class _CommentBubble extends StatelessWidget {
   }
 }
 
+class _TimelineItem extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String time;
+  final String? by;
+
+  const _TimelineItem({required this.icon, required this.color, required this.label, required this.time, this.by});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                if (by != null) Text('Oleh: $by', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              ],
+            ),
+          ),
+          Text(
+            time.length > 16 ? time.substring(0, 16).replaceFirst('T', ' ') : time, 
+            style: const TextStyle(fontSize: 11, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _StatusBottomSheet extends StatelessWidget {
   final TicketModel ticket;
   final WidgetRef ref;
@@ -323,6 +441,7 @@ class _StatusBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statuses = [
+      AppConstants.statusSend,
       AppConstants.statusOpen,
       AppConstants.statusInProgress,
       AppConstants.statusResolved,
@@ -342,7 +461,10 @@ class _StatusBottomSheet extends StatelessWidget {
             title: Text(AppTheme.getStatusLabel(s)),
             trailing: ticket.status == s ? const Icon(Icons.check, color: AppTheme.primary) : null,
             onTap: () async {
-              await ref.read(ticketDetailProvider.notifier).updateStatus(s);
+              final user = ref.read(authProvider).user;
+              if (user != null) {
+                await ref.read(ticketDetailProvider.notifier).updateStatus(s, user.id, user.name);
+              }
               if (context.mounted) Navigator.pop(context);
             },
           )),
@@ -352,16 +474,30 @@ class _StatusBottomSheet extends StatelessWidget {
   }
 }
 
-class _AssignBottomSheet extends StatelessWidget {
+class _AssignBottomSheet extends ConsumerStatefulWidget {
   final WidgetRef ref;
   const _AssignBottomSheet({required this.ref});
 
   @override
+  ConsumerState<_AssignBottomSheet> createState() => _AssignBottomSheetState();
+}
+
+class _AssignBottomSheetState extends ConsumerState<_AssignBottomSheet> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      final state = ref.read(userManagementProvider);
+      if (state.helpdesks.isEmpty && !state.isLoading) {
+        ref.read(userManagementProvider.notifier).loadHelpdesks();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final staff = [
-      {'id': 'u002', 'name': 'Dewi Helpdesk', 'role': 'Helpdesk'},
-      {'id': 'u003', 'name': 'Admin Sistem', 'role': 'Admin'},
-    ];
+    final staffAsync = ref.watch(userManagementProvider);
+    final staff = staffAsync.helpdesks.map((e) => {'id': e.id, 'name': e.name, 'role': e.role}).toList();
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -371,15 +507,23 @@ class _AssignBottomSheet extends StatelessWidget {
         children: [
           const Text('Assign Tiket ke', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          ...staff.map((s) => ListTile(
-            leading: CircleAvatar(backgroundColor: AppTheme.secondary, child: const Icon(Icons.person, color: Colors.white)),
-            title: Text(s['name']!),
-            subtitle: Text(s['role']!),
-            onTap: () async {
-              await ref.read(ticketDetailProvider.notifier).assignTicket(s['name']!, s['id']!);
-              if (context.mounted) Navigator.pop(context);
-            },
-          )),
+          if (staffAsync.isLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (staff.isEmpty)
+            const Center(child: Text('Tidak ada akun Helpdesk ditemukan.'))
+          else
+            ...staff.map((s) => ListTile(
+              leading: CircleAvatar(backgroundColor: AppTheme.secondary, child: const Icon(Icons.person, color: Colors.white)),
+              title: Text(s['name']!),
+              subtitle: Text(s['role']!),
+              onTap: () async {
+                final user = widget.ref.read(authProvider).user;
+                if (user != null) {
+                  await widget.ref.read(ticketDetailProvider.notifier).assignTicket(s['name']!, s['id']!, user.id, user.name);
+                }
+                if (context.mounted) Navigator.pop(context);
+              },
+            )),
         ],
       ),
     );

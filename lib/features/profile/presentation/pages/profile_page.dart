@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/theme_provider.dart';
+import 'settings_page.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -18,7 +18,6 @@ class ProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).user;
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
 
     if (user == null) return const SizedBox();
     final rColor = _roleColor(user.role);
@@ -32,7 +31,7 @@ class ProfilePage extends ConsumerWidget {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 32),
-              decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08)),
+              decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.08)),
               child: Column(
                 children: [
                   Stack(
@@ -95,29 +94,12 @@ class ProfilePage extends ConsumerWidget {
                   const Text('Pengaturan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                   const SizedBox(height: 10),
                   Card(
-                    child: Column(
-                      children: [
-                        // Dark Mode toggle
-                        ListTile(
-                          leading: Icon(isDark ? Icons.dark_mode : Icons.light_mode,
-                              color: isDark ? Colors.amber : Colors.blueGrey),
-                          title: Text(isDark ? 'Mode Gelap' : 'Mode Terang'),
-                          subtitle: const Text('Ganti tampilan aplikasi'),
-                          trailing: Switch(
-                            value: isDark,
-                            onChanged: (_) => ref.read(themeProvider.notifier).toggle(),
-                            activeColor: AppTheme.primary,
-                          ),
-                        ),
-                        const Divider(height: 1),
-                        ListTile(
-                          leading: const Icon(Icons.notifications_outlined),
-                          title: const Text('Notifikasi'),
-                          subtitle: const Text('Kelola notifikasi tiket'),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () {},
-                        ),
-                      ],
+                    child: ListTile(
+                      leading: const Icon(Icons.settings_outlined),
+                      title: const Text('Pengaturan Aplikasi'),
+                      subtitle: const Text('Tampilan, notifikasi, dan lainnya'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage())),
                     ),
                   ),
                   const SizedBox(height: 20),

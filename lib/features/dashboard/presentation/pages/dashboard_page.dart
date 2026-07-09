@@ -100,27 +100,39 @@ class DashboardPage extends ConsumerWidget {
               children: [
                 _StatCard(
                   label: 'Total',
-                  value: data['total'],
+                  value: data['total'] ?? 0,
                   color: Colors.blueGrey,
                   icon: Icons.confirmation_number,
                 ),
                 _StatCard(
+                  label: 'Send',
+                  value: data['send'] ?? 0,
+                  color: AppTheme.statusSend,
+                  icon: Icons.send,
+                ),
+                _StatCard(
                   label: 'Open',
-                  value: data['open'],
+                  value: data['open'] ?? 0,
                   color: AppTheme.statusOpen,
                   icon: Icons.fiber_new,
                 ),
                 _StatCard(
                   label: 'In Progress',
-                  value: data['inProgress'],
+                  value: data['in_progress'] ?? 0,
                   color: AppTheme.statusInProgress,
                   icon: Icons.autorenew,
                 ),
                 _StatCard(
                   label: 'Resolved',
-                  value: data['resolved'],
+                  value: data['resolved'] ?? 0,
                   color: AppTheme.statusResolved,
                   icon: Icons.check_circle_outline,
+                ),
+                _StatCard(
+                  label: 'Closed',
+                  value: data['closed'] ?? 0,
+                  color: AppTheme.statusClosed,
+                  icon: Icons.lock_outline,
                 ),
               ],
             ),
@@ -179,7 +191,7 @@ class DashboardPage extends ConsumerWidget {
               onAction: () => ref.read(bottomNavIndexProvider.notifier).state = 1,
             ),
             const SizedBox(height: 12),
-            if ((data['recentTickets'] as List).isEmpty)
+            if ((data['recentTickets'] as List?)?.isEmpty ?? true)
               const AppEmptyState(
                 message: 'Belum ada tiket',
                 icon: Icons.inbox_outlined,
@@ -244,7 +256,7 @@ class _StatCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: color, size: 22),

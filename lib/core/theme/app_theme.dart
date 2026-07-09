@@ -13,6 +13,7 @@ class AppTheme {
   static const Color info = Color(0xFF039BE5);
 
   // Status Colors
+  static const Color statusSend = Color(0xFF039BE5); // Light Blue for 'Send'
   static const Color statusOpen = Color(0xFF1E88E5);
   static const Color statusInProgress = Color(0xFFFB8C00);
   static const Color statusResolved = Color(0xFF43A047);
@@ -142,6 +143,7 @@ class AppTheme {
   // Status color helpers
   static Color getStatusColor(String status) {
     switch (status) {
+      case 'send': return statusSend;
       case 'open': return statusOpen;
       case 'in_progress': return statusInProgress;
       case 'resolved': return statusResolved;
@@ -152,6 +154,7 @@ class AppTheme {
 
   static String getStatusLabel(String status) {
     switch (status) {
+      case 'send': return 'Send';
       case 'open': return 'Open';
       case 'in_progress': return 'In Progress';
       case 'resolved': return 'Resolved';

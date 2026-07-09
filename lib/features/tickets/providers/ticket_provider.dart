@@ -13,23 +13,36 @@ class TicketListState {
   final bool isLoading;
   final String? error;
   final String filterStatus; // '' = all
+  final String filterHelpdesk; // '' = all helpdesks
+  final bool hasLoaded;
 
   const TicketListState({
     this.tickets = const [],
     this.isLoading = false,
     this.error,
     this.filterStatus = '',
+    this.filterHelpdesk = '',
+    this.hasLoaded = false,
   });
 
-  List<TicketModel> get filteredTickets => filterStatus.isEmpty
-      ? tickets
-      : tickets.where((t) => t.status == filterStatus).toList();
+  List<TicketModel> get filteredTickets {
+    var result = tickets;
+    if (filterStatus.isNotEmpty) {
+      result = result.where((t) => t.status == filterStatus).toList();
+    }
+    if (filterHelpdesk.isNotEmpty) {
+      result = result.where((t) => t.assignedToId == filterHelpdesk).toList();
+    }
+    return result;
+  }
 
   TicketListState copyWith({
     List<TicketModel>? tickets,
     bool? isLoading,
     String? error,
     String? filterStatus,
+    String? filterHelpdesk,
+    bool? hasLoaded,
     bool clearError = false,
   }) =>
       TicketListState(
@@ -37,6 +50,8 @@ class TicketListState {
         isLoading: isLoading ?? this.isLoading,
         error: clearError ? null : error ?? this.error,
         filterStatus: filterStatus ?? this.filterStatus,
+        filterHelpdesk: filterHelpdesk ?? this.filterHelpdesk,
+        hasLoaded: hasLoaded ?? this.hasLoaded,
       );
 }
 
@@ -50,10 +65,10 @@ class TicketListNotifier extends StateNotifier<TicketListState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final tickets = await _repo.getTickets(userId, role);
-      state = state.copyWith(tickets: tickets, isLoading: false);
+      state = state.copyWith(tickets: tickets, isLoading: false, hasLoaded: true);
     } catch (e) {
       state = state.copyWith(
-          isLoading: false, error: e.toString().replaceAll('Exception: ', ''));
+          isLoading: false, error: e.toString().replaceAll('Exception: ', ''), hasLoaded: true);
     }
   }
 
@@ -64,7 +79,7 @@ class TicketListNotifier extends StateNotifier<TicketListState> {
     required String priority,
     required String userId,
     required String userName,
-    List<String> attachments = const [],
+    List<Map<String, dynamic>> attachments = const [],
   }) async {
     try {
       final ticket = await _repo.createTicket(
@@ -83,8 +98,8 @@ class TicketListNotifier extends StateNotifier<TicketListState> {
     }
   }
 
-  Future<void> updateStatus(String id, String status) async {
-    final updated = await _repo.updateStatus(id, status);
+  Future<void> updateStatus(String id, String status, String userId, String userName) async {
+    final updated = await _repo.updateStatus(id, status, userId, userName);
     state = state.copyWith(
       tickets: state.tickets
           .map((t) => t.id == id ? updated : t)
@@ -93,6 +108,7 @@ class TicketListNotifier extends StateNotifier<TicketListState> {
   }
 
   void setFilter(String status) => state = state.copyWith(filterStatus: status);
+  void setFilterHelpdesk(String helpdeskId) => state = state.copyWith(filterHelpdesk: helpdeskId);
 }
 
 // ─── Providers ────────────────────────────────────────────────────────────────
@@ -135,11 +151,20 @@ class TicketDetailNotifier extends StateNotifier<TicketDetailState> {
 
   TicketDetailNotifier(this._repo) : super(const TicketDetailState());
 
-  Future<void> load(String id) async {
+  Future<void> load(String id, String userId, String userName, String role) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final ticket = await _repo.getTicketDetail(id);
-      state = state.copyWith(ticket: ticket, isLoading: false);
+      
+      // Automatically mark as read if the ticket is assigned to this helpdesk
+      if (role == 'helpdesk' && ticket.assignedToId == userId && ticket.readAt == null) {
+        await _repo.markAsRead(id, userId, userName);
+        // reload to get updated readAt
+        final updatedTicket = await _repo.getTicketDetail(id);
+        state = state.copyWith(ticket: updatedTicket, isLoading: false);
+      } else {
+        state = state.copyWith(ticket: ticket, isLoading: false);
+      }
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -171,17 +196,28 @@ class TicketDetailNotifier extends StateNotifier<TicketDetailState> {
     }
   }
 
-  Future<void> updateStatus(String status) async {
+  Future<void> updateStatus(String status, String userId, String userName) async {
     if (state.ticket == null) return;
-    final updated = await _repo.updateStatus(state.ticket!.id, status);
+    final updated = await _repo.updateStatus(state.ticket!.id, status, userId, userName);
     state = state.copyWith(ticket: updated);
   }
 
-  Future<void> assignTicket(String assignedTo, String assignedToId) async {
+  Future<void> assignTicket(String assignedTo, String assignedToId, String userId, String userName) async {
     if (state.ticket == null) return;
     final updated =
-    await _repo.assignTicket(state.ticket!.id, assignedTo, assignedToId);
+    await _repo.assignTicket(state.ticket!.id, assignedTo, assignedToId, userId, userName);
     state = state.copyWith(ticket: updated);
+  }
+
+  Future<void> deleteTicket() async {
+    if (state.ticket == null) return;
+    state = state.copyWith(isLoading: true);
+    try {
+      await _repo.deleteTicket(state.ticket!.id);
+      state = state.copyWith(isLoading: false, ticket: null); // null indicates deleted
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
 }
 

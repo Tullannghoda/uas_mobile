@@ -8,7 +8,8 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/pages/splash_page.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
-// import 'features/auth/presentation/pages/forgot_password_page.dart'; // kalau belum ada, jangan aktifkan
+import 'features/auth/presentation/pages/forgot_password.dart';
+import 'core/services/supabase_service.dart';
 
 import 'features/main_wrapper.dart';
 
@@ -16,6 +17,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await LocalStorageService.init();
+  await SupabaseService.init();
 
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -40,7 +42,7 @@ class MyApp extends ConsumerWidget { // ✅ FIX
         '/': (context) => const SplashPage(),
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
-        // '/forgot-password': (context) => const ForgotPasswordPage(), // ⚠️ aktifkan kalau file ada
+        '/forgot-password': (context) => const ForgotPasswordPage(),
         '/home': (context) => const MainWrapper(),
       },
     );

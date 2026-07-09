@@ -92,53 +92,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                 ),
 
-                const SizedBox(height: 36),
 
-                // Demo info
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: Colors.blue.withOpacity(0.3)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.info_outline,
-                              size: 14, color: Colors.blue),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Demo Login',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.blue.shade700,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text('User: user@mail.com / 123456',
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.blue.shade700)),
-                      Text('Helpdesk: helpdesk@mail.com / 123456',
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.blue.shade700)),
-                      Text('Admin: admin@mail.com / 123456',
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.blue.shade700)),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 24),
 
                 // Email
                 TextFormField(
@@ -149,10 +103,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
                   validator: (v) {
-                    if (v == null || v.isEmpty)
+                    if (v == null || v.isEmpty) {
                       return 'Email wajib diisi';
-                    if (!v.contains('@'))
+                    }
+                    if (!v.contains('@')) {
                       return 'Format email tidak valid';
+                    }
                     return null;
                   },
                 ),
@@ -179,10 +135,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ),
                   validator: (v) {
-                    if (v == null || v.isEmpty)
+                    if (v == null || v.isEmpty) {
                       return 'Password wajib diisi';
-                    if (v.length < 6)
+                    }
+                    if (v.length < 6) {
                       return 'Password minimal 6 karakter';
+                    }
                     return null;
                   },
                 ),
@@ -204,7 +162,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.08),
+                      color: Colors.red.withValues(alpha: 0.08),
                       borderRadius:
                       BorderRadius.circular(10),
                     ),

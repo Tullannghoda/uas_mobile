@@ -7,6 +7,7 @@ class AppConstants {
   static const String roleAdmin = 'admin';
 
   // Ticket Status
+  static const String statusSend = 'send';
   static const String statusOpen = 'open';
   static const String statusInProgress = 'in_progress';
   static const String statusResolved = 'resolved';
@@ -33,5 +34,9 @@ class AppConstants {
 
   // App Info
   static const String appName = 'E-Helpdesk';
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '2.0.0';
+
+  // Supabase Info
+  static const String supabaseUrl = 'https://fakapmaalxymvskkdxor.supabase.co';
+  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZha2FwbWFhbHh5bXZza2tkeG9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNjM2NDAsImV4cCI6MjA5ODgzOTY0MH0.1BvxgJwERqjyuwulFNcxjr58UaBb8dEmCb09bMbyseE';
 }

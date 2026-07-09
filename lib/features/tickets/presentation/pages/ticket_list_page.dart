@@ -7,6 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import 'ticket_detail_page.dart';
 import 'create_ticket_page.dart';
+import '../../../admin/providers/user_management_provider.dart';
 
 class TicketListPage extends ConsumerWidget {
   const TicketListPage({super.key});
@@ -17,7 +18,7 @@ class TicketListPage extends ConsumerWidget {
     final user = ref.watch(authProvider).user;
 
     Future.microtask(() {
-      if (user != null && state.tickets.isEmpty && !state.isLoading) {
+      if (user != null && !state.hasLoaded && !state.isLoading) {
         ref.read(ticketListProvider.notifier).loadTickets(user.id, user.role);
       }
     });
@@ -58,6 +59,8 @@ class TicketListPage extends ConsumerWidget {
                 children: [
                   _FilterChip(ref: ref, value: '', label: 'Semua', current: state.filterStatus),
                   const SizedBox(width: 8),
+                  _FilterChip(ref: ref, value: 'send', label: 'Send', current: state.filterStatus),
+                  const SizedBox(width: 8),
                   _FilterChip(ref: ref, value: 'open', label: 'Open', current: state.filterStatus),
                   const SizedBox(width: 8),
                   _FilterChip(ref: ref, value: 'in_progress', label: 'In Progress', current: state.filterStatus),
@@ -69,6 +72,36 @@ class TicketListPage extends ConsumerWidget {
               ),
             ),
           ),
+          // --- Helpdesk Filter (Admin Only) ---
+          if (user?.isAdmin == true)
+            Consumer(
+              builder: (context, ref, _) {
+                final helpdeskState = ref.watch(userManagementProvider);
+                if (!helpdeskState.isLoading && helpdeskState.helpdesks.isEmpty && helpdeskState.error == null) {
+                  Future.microtask(() => ref.read(userManagementProvider.notifier).loadHelpdesks());
+                }
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: DropdownButtonFormField<String>(
+                    value: state.filterHelpdesk.isEmpty ? null : state.filterHelpdesk,
+                    decoration: InputDecoration(
+                      labelText: 'Filter Helpdesk',
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('Semua Helpdesk')),
+                      ...helpdeskState.helpdesks.map((h) => DropdownMenuItem(
+                            value: h.id,
+                            child: Text(h.name),
+                          )),
+                    ],
+                    onChanged: (v) => ref.read(ticketListProvider.notifier).setFilterHelpdesk(v ?? ''),
+                  ),
+                );
+              }
+            ),
           // --- Count ---
           if (!state.isLoading)
             Padding(

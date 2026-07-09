@@ -31,11 +31,15 @@ class LocalStorageService {
     required String name,
     required String email,
     required String role,
+    String? phone,
+    String? department,
   }) async {
     await prefs.setString(AppConstants.keyUserId, id);
     await prefs.setString(AppConstants.keyUserName, name);
     await prefs.setString(AppConstants.keyUserEmail, email);
     await prefs.setString(AppConstants.keyUserRole, role);
+    if (phone != null) await prefs.setString('user_phone', phone);
+    if (department != null) await prefs.setString('user_department', department);
   }
 
   static String? getUserId() =>
@@ -49,6 +53,12 @@ class LocalStorageService {
 
   static String? getUserRole() =>
       prefs.getString(AppConstants.keyUserRole);
+
+  static String? getUserPhone() =>
+      prefs.getString('user_phone');
+
+  static String? getUserDepartment() =>
+      prefs.getString('user_department');
 
   // ─── THEME ─────────────────────────────
   static Future<void> saveThemeMode(bool isDark) async =>

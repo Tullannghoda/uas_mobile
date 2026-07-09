@@ -17,10 +17,10 @@ class CommentModel {
 
   factory CommentModel.fromJson(Map<String, dynamic> json) => CommentModel(
     id: json['id'] ?? '',
-    userId: json['userId'] ?? '',
-    userName: json['userName'] ?? '',
+    userId: json['user_id'] ?? '',
+    userName: json['user_name'] ?? '',
     role: json['role'] ?? 'user',
     content: json['content'] ?? '',
-    createdAt: json['createdAt'] ?? '',
+    createdAt: json['created_at'] ?? '',
   );
 }

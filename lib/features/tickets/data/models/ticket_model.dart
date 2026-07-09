@@ -1,4 +1,5 @@
 import 'comment_model.dart';
+import 'ticket_history_model.dart';
 
 class TicketModel {
   final String id;
@@ -13,7 +14,13 @@ class TicketModel {
   final String userName;
   final String? assignedTo;
   final String? assignedToId;
+  final String? assignedAt;
+  final String? readAt;
+  final String? inProgressAt;
+  final String? resolvedAt;
+  final String? closedAt;
   final List<CommentModel> comments;
+  final List<TicketHistoryModel> history;
   final List<String> attachments;
 
   const TicketModel({
@@ -29,7 +36,13 @@ class TicketModel {
     required this.userName,
     this.assignedTo,
     this.assignedToId,
+    this.assignedAt,
+    this.readAt,
+    this.inProgressAt,
+    this.resolvedAt,
+    this.closedAt,
     required this.comments,
+    required this.history,
     required this.attachments,
   });
 
@@ -40,16 +53,26 @@ class TicketModel {
     status: json['status'] ?? 'open',
     priority: json['priority'] ?? 'medium',
     category: json['category'] ?? '',
-    createdAt: json['createdAt'] ?? '',
-    updatedAt: json['updatedAt'] ?? '',
-    userId: json['userId'] ?? '',
-    userName: json['userName'] ?? '',
-    assignedTo: json['assignedTo'],
-    assignedToId: json['assignedToId'],
+    createdAt: json['created_at'] ?? '',
+    updatedAt: json['updated_at'] ?? '',
+    userId: json['user_id'] ?? '',
+    userName: json['user_name'] ?? '',
+    assignedTo: json['assigned_to_name'],
+    assignedToId: json['assigned_to_id'],
+    assignedAt: json['assigned_at'],
+    readAt: json['read_at'],
+    inProgressAt: json['in_progress_at'],
+    resolvedAt: json['resolved_at'],
+    closedAt: json['closed_at'],
     comments: (json['comments'] as List? ?? [])
         .map((c) => CommentModel.fromJson(c))
         .toList(),
-    attachments: List<String>.from(json['attachments'] ?? []),
+    history: (json['ticket_history'] as List? ?? [])
+        .map((h) => TicketHistoryModel.fromJson(h))
+        .toList(),
+    attachments: (json['attachments'] as List? ?? [])
+        .map((a) => a['file_url'] as String)
+        .toList(),
   );
 
   TicketModel copyWith({
@@ -71,7 +94,13 @@ class TicketModel {
         userName: userName,
         assignedTo: assignedTo ?? this.assignedTo,
         assignedToId: assignedToId ?? this.assignedToId,
+        assignedAt: assignedAt,
+        readAt: readAt,
+        inProgressAt: inProgressAt,
+        resolvedAt: resolvedAt,
+        closedAt: closedAt,
         comments: comments ?? this.comments,
+        history: history,
         attachments: attachments,
       );
 

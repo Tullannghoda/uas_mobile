@@ -24,7 +24,7 @@ class UserModel {
     role: json['role'] ?? 'user',
     phone: json['phone'],
     department: json['department'],
-    avatar: json['avatar'],
+    avatar: json['avatar_url'] ?? json['avatar'],
   );
 
   Map<String, dynamic> toJson() => {
@@ -34,7 +34,7 @@ class UserModel {
     'role': role,
     'phone': phone,
     'department': department,
-    'avatar': avatar,
+    'avatar_url': avatar,
   };
 
   bool get isAdmin => role == 'admin';
